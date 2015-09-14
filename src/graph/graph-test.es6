@@ -135,6 +135,31 @@ describe('Graph', () => {
           'd -> b', 'b'
         ]);
       });
+
+      it('should call enter/leave node callback with right order.', function() {
+        let stack = [];
+        let trace = [];
+        graph.dfs('a', _.defaults({
+          willFollowEdge: function (nodeFrom, nodeTo, options) {
+            return !(options.nodeVisited(nodeTo) ||
+              (nodeFrom === 'b' && nodeTo === 'c') ||
+              (nodeFrom === 'c' && nodeTo === 'b'));
+          },
+          onEnterNode: function (n) {
+            stack.push(n);
+            trace.push(stack.join(' -> '));
+          },
+          onLeaveNode: function (n) {
+            stack.pop().should.equal(n);
+          }
+        }));
+        trace.should.deepEqual([
+          'a',
+          'a -> b',
+          'a -> b -> d',
+          'a -> b -> d -> c'
+        ]);
+      });
     });
 
     describe('bfs', function() {

@@ -107,29 +107,40 @@ export class Graph {
       willFollowEdge: 'IfTowardUnvisitedNode'
     });
 
+    let edgeVisited = {};
+    let nodeVisited = {};
+    let visitNode = options.visitNode;
+    let visitEdge = options.visitEdge;
+
+    options.visitNode = function (node, value) {
+      visitNode(node, value);
+      nodeVisited[node] = true;
+    };
+
+    options.nodeVisited = function (node) {
+      // console.log(node);
+      // console.log(nodeVisited[node]);
+      return !!nodeVisited[node];
+    };
+
+    options.visitEdge = function (nodeFrom, nodeTo, value) {
+      visitEdge(nodeFrom, nodeTo, value);
+      _.forEach(getEdgeNames(nodeFrom, nodeTo), function (name) {
+        edgeVisited[name] = true;
+      });
+    };
+
+    options.edgeVisited = function (nodeFrom, nodeTo) {
+      return !!edgeVisited[getEdgeName(nodeFrom, nodeTo)];
+    };
+
     if (options.willFollowEdge === 'IfTowardUnvisitedNode') {
-      let visited = {};
-      let visitNode = options.visitNode;
-      options.visitNode = function (node, value) {
-        visitNode(node, value);
-        // console.log(node);
-        visited[node] = true;
-      };
-      options.willFollowEdge = function (nodeFrom, nodeTo, value) {
-        // console.log(nodeTo);
-        return !visited[nodeTo];
+      options.willFollowEdge = function (nodeFrom, nodeTo, opt) {
+        return !opt.nodeVisited(nodeTo);
       };
     } else if (options.willFollowEdge === 'IfUnvisited'){
-      let visited = {};
-      let visitEdge = options.visitEdge;
-      options.visitEdge = function (nodeFrom, nodeTo, value) {
-        visitEdge(nodeFrom, nodeTo, value)
-        _.forEach(getEdgeNames(nodeFrom, nodeTo), function (name) {
-          visited[name] = true;
-        });
-      };
-      options.willFollowEdge = function (nodeFrom, nodeTo, value) {
-        return !visited[getEdgeName(nodeFrom, nodeTo)];
+      options.willFollowEdge = function (nodeFrom, nodeTo, opt) {
+        return !opt.edgeVisited(nodeFrom, nodeTo);
       };
     }
 
@@ -142,13 +153,19 @@ export class Graph {
   }
 
   _dfs(node, options) {
+    options.onEnterNode && options.onEnterNode(node);
     options.visitNode(node, this.getNodeValue(node));
     this.iterateAdjacent(node, (nodeTarget, value) => {
-      if (options.willFollowEdge(node, nodeTarget, value)) {
+      if (options.willFollowEdge(node, nodeTarget, {
+        value: value,
+        nodeVisited: options.nodeVisited,
+        edgeVisited: options.edgeVisited
+      })) {
         options.visitEdge(node, nodeTarget, value);
         this._dfs(nodeTarget, options);
       }
     });
+    options.onLeaveNode && options.onLeaveNode(node);
   }
 
   bfs(node, options) {
@@ -162,7 +179,11 @@ export class Graph {
     while (!_.isEmpty(q)) {
       let n = q.shift();
       this.iterateAdjacent(n, (nodeTarget, value) => {
-        if (options.willFollowEdge(n, nodeTarget, value)) {
+        if (options.willFollowEdge(n, nodeTarget, {
+          value: value,
+          nodeVisited: options.nodeVisited,
+          edgeVisited: options.edgeVisited
+        })) {
           options.visitEdge(n, nodeTarget, value);
           options.visitNode(nodeTarget, this.getNodeValue(nodeTarget));
           q.push(nodeTarget);
@@ -170,4 +191,5 @@ export class Graph {
       });
     }
   }
+
 }
