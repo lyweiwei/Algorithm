@@ -92,7 +92,7 @@ describe('Graph', () => {
     });
   });
 
-  describe('dfs', function() {
+  describe('searches', function() {
     let graph, visited;
 
     let defaultOptions = {
@@ -110,29 +110,57 @@ describe('Graph', () => {
       visited = [];
     });
 
-    it('should visit all nodes by default', function() {
-      graph.dfs('a', defaultOptions);
-      visited.should.deepEqual([
-        'a',
-        'a -> b', 'b',
-        'b -> c', 'c',
-        'c -> d', 'd'
-      ]);
+    describe('dfs', function() {
+      it('should visit all nodes by default', function() {
+        graph.dfs('a', defaultOptions);
+        visited.should.deepEqual([
+          'a',
+          'a -> b', 'b',
+          'b -> c', 'c',
+          'c -> d', 'd'
+        ]);
+      });
+
+      it('should visit all edges with willFollowEdge IfUnvisited', function () {
+        graph.dfs('a', _.defaults({
+          willFollowEdge: 'IfUnvisited'
+        }, defaultOptions));
+
+        visited.should.deepEqual([
+          'a',
+          'a -> b', 'b',
+          'b -> c', 'c',
+          'c -> a', 'a',
+          'c -> d', 'd',
+          'd -> b', 'b'
+        ]);
+      });
     });
 
-    it('should visit all edges with willFollowEdge IfUnvisited', function () {
-      graph.dfs('a', _.defaults({
-        willFollowEdge: 'IfUnvisited'
-      }, defaultOptions));
+    describe('bfs', function() {
+      it('should visit all nodes by default', function () {
+        graph.bfs('a', defaultOptions);
+        visited.should.deepEqual([
+          'a',
+          'a -> b', 'b',
+          'a -> c', 'c',
+          'b -> d', 'd'
+        ]);
+      });
 
-      visited.should.deepEqual([
-        'a',
-        'a -> b', 'b',
-        'b -> c', 'c',
-        'c -> a', 'a',
-        'c -> d', 'd',
-        'd -> b', 'b'
-      ]);
+      it('should visit all edges with willFollowEdge IfUnvisited', function () {
+        graph.bfs('a', _.defaults({
+          willFollowEdge: 'IfUnvisited',
+        }, defaultOptions));
+        visited.should.deepEqual([
+          'a',
+          'a -> b', 'b',
+          'a -> c', 'c',
+          'b -> c', 'c',
+          'b -> d', 'd',
+          'c -> d', 'd'
+        ]);
+      });
     });
   });
 });

@@ -100,7 +100,7 @@ export class Graph {
     });
   }
 
-  dfs(node, options) {
+  _normalizeSearchOptions(options) {
     options = _.defaults({}, options, {
       visitNode: _.noop,
       visitEdge: _.noop,
@@ -133,6 +133,11 @@ export class Graph {
       };
     }
 
+    return options;
+  }
+
+  dfs(node, options) {
+    options = this._normalizeSearchOptions(options);
     this._dfs(node, options);
   }
 
@@ -144,5 +149,25 @@ export class Graph {
         this._dfs(nodeTarget, options);
       }
     });
+  }
+
+  bfs(node, options) {
+    options = this._normalizeSearchOptions(options);
+    this._bfs(node, options);
+  }
+
+  _bfs(node, options) {
+    let q = [ node ];
+    options.visitNode(node, this.getNodeValue(node));
+    while (!_.isEmpty(q)) {
+      let n = q.shift();
+      this.iterateAdjacent(n, (nodeTarget, value) => {
+        if (options.willFollowEdge(n, nodeTarget, value)) {
+          options.visitEdge(n, nodeTarget, value);
+          options.visitNode(nodeTarget, this.getNodeValue(nodeTarget));
+          q.push(nodeTarget);
+        }
+      });
+    }
   }
 }
