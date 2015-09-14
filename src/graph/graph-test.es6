@@ -188,4 +188,52 @@ describe('Graph', () => {
       });
     });
   });
+
+  describe('findAllLoops', function() {
+    it('should find all loops without duplication', function() {
+      let graph = new Graph({
+        edges: [
+          'a -> b',
+          'b -> c',
+          'a -> c',
+          'b -> d',
+          'c -> d',
+          'd -> a'
+        ]
+      });
+      let loops = [];
+      graph.findAllLoops('a', function (loop) {
+        loops.push(loop);
+      });
+      loops.should.deepEqual([
+        [ 'a', 'b', 'c' ],
+        [ 'b', 'c', 'd' ],
+        [ 'a', 'b', 'c', 'd' ]
+      ]);
+    });
+
+    it('should find all loops in all distributed parts', function() {
+      let graph = new Graph({
+        edges: [
+          'a -> b',
+          'b -> c',
+          'c -> a',
+          'd -> e',
+          'e -> f',
+          'f -> g',
+          'g -> e',
+          'f -> d'
+        ]
+      });
+      let loops = [];
+      graph.findAllLoops(function (loop) {
+        loops.push(loop);
+      });
+      loops.should.deepEqual([
+        [ 'a', 'b', 'c' ],
+        [ 'e', 'f', 'g' ],
+        [ 'd', 'e', 'f' ]
+      ]);
+    });
+  });
 });

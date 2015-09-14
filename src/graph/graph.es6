@@ -192,4 +192,57 @@ export class Graph {
     }
   }
 
+  findAllLoops(node, cb) {
+    let nodeUnvisited = _.mapValues(this.nodes, function () { return true; });
+
+    let findLoops = (node) => {
+      let chain = [];
+      let visitMap = {};
+      let loop = false;
+
+      this.dfs(node, {
+        willFollowEdge: function (nodeFrom, nodeTo, options) {
+          return !(loop ||
+            visitMap[nodeFrom][nodeTo] ||
+            (visitMap[nodeTo] && visitMap[nodeTo][nodeFrom])
+          );
+        },
+
+        onEnterNode: function (node) {
+          var lastNode = _.last(chain);
+          if (lastNode) {
+            visitMap[lastNode][node] = true;
+          }
+          loop = !!visitMap[node];
+          if (loop) {
+            visitMap[node][lastNode] = true;
+          } else {
+            visitMap[node] = {};
+          }
+          delete nodeUnvisited[node];
+          chain.push(node);
+        },
+
+        onLeaveNode: function (node) {
+          chain.pop();
+          if (loop) {
+            loop = false;
+            cb(chain.slice(_.indexOf(chain, node)));
+          } else {
+            delete visitMap[node];
+          }
+        }
+      });
+    };
+
+    if (_.isFunction(node)) {
+      cb = node;
+      while (!_.isEmpty(nodeUnvisited)) {
+        findLoops(_(nodeUnvisited).keys().first());
+      }
+    } else {
+      findLoops(node);
+    }
+  }
+
 }
