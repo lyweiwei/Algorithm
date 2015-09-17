@@ -94,6 +94,12 @@ export class Graph {
     return !!this.nodes[nodeA].adjacent[nodeB];
   }
 
+  iterateNodes(cb) {
+    _.forEach(this.nodes, function (node, nodeName) {
+      cb(nodeName, node.value);
+    });
+  }
+
   iterateAdjacent(node, cb) {
     _.forEach(this.nodes[node].adjacent, function(edge, nodeTarget) {
       cb(nodeTarget, edge.value);
